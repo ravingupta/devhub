@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>devhub</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232563eb'/><circle cx='11' cy='16' r='4' fill='white'/><circle cx='21' cy='16' r='4' fill='white' opacity='.6'/></svg>">
+<style>
+  :root {
+    --bg: #f6f6f4; --surface: #ffffff; --surface-2: #f0f0ed; --border: #e3e3df;
+    --text: #1d1d1b; --muted: #6d6d68; --accent: #2563eb; --accent-text: #ffffff;
+    --live: #16a34a; --live-soft: #dcfce7; --stop: #b5b0aa; --danger: #dc2626;
+    --warn: #b45309; --warn-soft: #fef3c7;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141413; --surface: #1d1d1b; --surface-2: #262624; --border: #33332f;
+      --text: #ececea; --muted: #9a9a94; --accent: #3b82f6; --live: #22c55e; --live-soft: #14301f;
+      --stop: #5c5c57; --danger: #f87171; --warn: #fbbf24; --warn-soft: #3a2e12; color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 20px 16px 60px; }
+  header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  header h1 { font-size: 20px; margin: 0 4px 0 0; letter-spacing: -.01em; }
+  .pill { font-size: 12px; padding: 3px 9px; border-radius: 99px; background: var(--surface-2);
+          color: var(--muted); border: 1px solid var(--border); white-space: nowrap; }
+  .pill.ok { color: var(--live); background: var(--live-soft); border-color: transparent; }
+  .pill.warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 14px 0 4px; }
+  input[type=search] { flex: 1; min-width: 160px; max-width: 340px; padding: 8px 12px; border-radius: 10px;
+         border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+  .seg button { border: 0; border-radius: 0; padding: 8px 12px; background: transparent; color: var(--muted); }
+  .seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); font-weight: 600; }
+  .spacer { flex: 1; }
+
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+       margin: 28px 0 10px; font-weight: 600; display: flex; gap: 8px; align-items: baseline; }
+  h2 .count { font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+  /* running bar */
+  .live { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); }
+  .chip { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border);
+          border-radius: 12px; padding: 8px 8px 8px 12px; min-width: 0; }
+  .chip .txt { min-width: 0; flex: 1; }
+  .chip .n { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
+             color: inherit; text-decoration: none; }
+  .chip .s { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  /* sections */
+  details.sec { margin-top: 10px; }
+  details.sec > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
+       padding: 8px 2px; font-weight: 600; user-select: none; }
+  details.sec > summary::-webkit-details-marker { display: none; }
+  details.sec > summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--muted);
+       border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform .15s; margin: 0 4px 0 2px; }
+  details.sec[open] > summary::before { transform: rotate(45deg); }
+  details.sec > summary .meta { font-weight: 400; }
+  .grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); margin-bottom: 6px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+          padding: 12px 12px 10px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .card.idle { background: transparent; }
+  .title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--stop); flex: none; }
+  .on .dot, .dot.on { background: var(--live); box-shadow: 0 0 0 3px var(--live-soft); }
+  .name { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+  .name a { color: inherit; text-decoration: none; }
+  .name a:hover { text-decoration: underline; }
+  .fw { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; flex: none; }
+  .meta { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+  .cmd { font: 12px/1.4 var(--mono); background: var(--surface-2); border-radius: 8px; padding: 5px 8px;
+         overflow-x: auto; white-space: nowrap; color: var(--muted); }
+  .ports { display: flex; gap: 6px; flex-wrap: wrap; }
+  .port { font: 12px var(--mono); padding: 1px 7px; border-radius: 6px; border: 1px solid var(--border);
+          color: var(--muted); text-decoration: none; }
+  .port.primary { color: var(--text); border-color: var(--text); }
+  .actions { display: flex; gap: 6px; align-items: center; margin-top: 2px; }
+
+  button, .btn { font: 13px/1 inherit; font-family: inherit; padding: 7px 11px; border-radius: 9px;
+         border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;
+         text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  button:hover, .btn:hover { background: var(--surface-2); }
+  .primary-btn { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+  .primary-btn:hover { background: var(--accent); filter: brightness(1.08); }
+  .danger { color: var(--danger); }
+  button:disabled { opacity: .5; cursor: default; }
+
+  details.menu { position: relative; margin-left: auto; }
+  details.menu > summary { list-style: none; cursor: pointer; padding: 5px 9px; border-radius: 8px; color: var(--muted);
+         font-size: 18px; line-height: 1; }
+  details.menu > summary::-webkit-details-marker { display: none; }
+  details.menu > summary:hover { background: var(--surface-2); }
+  .pop { position: absolute; right: 0; bottom: calc(100% + 4px); z-index: 5; background: var(--surface);
+         border: 1px solid var(--border); border-radius: 12px; padding: 4px; min-width: 150px;
+         box-shadow: 0 8px 24px rgb(0 0 0 / .14); display: flex; flex-direction: column; }
+  .pop button { border: 0; justify-content: flex-start; width: 100%; padding: 9px 10px; }
+
+  .empty { color: var(--muted); padding: 18px; text-align: center; border: 1px dashed var(--border); border-radius: 14px; font-size: 14px; }
+  .events { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .ev { display: flex; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: 13px; }
+  .ev:first-child { border-top: 0; }
+  .ev time { color: var(--muted); font-variant-numeric: tabular-nums; flex: none; width: 92px; }
+  .ev > span { min-width: 0; overflow-wrap: anywhere; }
+  .ev b { font-weight: 600; }
+  .kind-started { color: var(--live); } .kind-stopped { color: var(--muted); }
+
+  dialog { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text);
+           padding: 18px; width: min(720px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgb(0 0 0 / .35); }
+  dialog h3 { margin: 0 0 12px; font-size: 17px; }
+  dialog label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  dialog input, dialog textarea { width: 100%; font: 13px var(--mono); padding: 9px; border-radius: 9px;
+           border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+  dialog pre { font: 12px/1.45 var(--mono); background: var(--bg); border-radius: 10px; padding: 10px;
+           max-height: 60vh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+  .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; overflow-wrap: anywhere; }
+  #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text);
+           color: var(--bg); padding: 9px 14px; border-radius: 10px; font-size: 13px; opacity: 0;
+           transition: opacity .2s; pointer-events: none; max-width: calc(100vw - 32px); z-index: 20; }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>devhub</h1>
+    <span class="pill" id="ts">Tailscale…</span>
+    <span class="pill" id="sec" hidden></span>
+  </header>
+
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="Find a project" autocomplete="off">
+    <div class="seg" role="group" aria-label="Sort">
+      <button data-sort="recent">Recent</button><button data-sort="az">A–Z</button>
+    </div>
+    <span class="spacer"></span>
+    <button id="rescan" title="Look for new projects in your folders">Rescan projects</button>
+  </div>
+
+  <h2>Running now <span class="count" id="nrun"></span></h2>
+  <div class="live" id="running"></div>
+
+  <div id="library"></div>
+
+  <details class="sec" id="hidden-sec" data-key="__hidden">
+    <summary>Hidden <span class="meta" id="nhidden"></span></summary>
+    <div class="grid" id="hidden"></div>
+  </details>
+
+  <details class="sec" data-key="__activity">
+    <summary>Activity</summary>
+    <div class="events" id="events"></div>
+  </details>
+  <p class="hint" id="foot"></p>
+</div>
+
+<dialog id="edit">
+  <h3>Edit <span id="edit-name"></span></h3>
+  <label for="f-name">URL name</label>
+  <input id="f-name" autocomplete="off" spellcheck="false">
+  <label for="f-cmd">Start command (runs in <span id="f-cwd"></span>)</label>
+  <textarea id="f-cmd" rows="3" spellcheck="false"></textarea>
+  <p class="hint" id="f-hint"></p>
+  <div class="row"><button data-close>Cancel</button><button class="primary-btn" id="f-save">Save</button></div>
+</dialog>
+
+<dialog id="logs">
+  <h3>Logs · <span id="log-name"></span></h3>
+  <pre id="log-text"></pre>
+  <div class="row"><button data-close>Close</button></div>
+</dialog>
+
+<div id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem("devhub:" + k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("devhub:" + k, JSON.stringify(v)); } catch {} },
+};
+let state = null, editing = null, logTimer = null;
+let sortMode = store.get("sort", "recent");
+const openSecs = store.get("open", {});  // section key -> bool (default: open, except hidden/activity)
+
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function ago(t) {
+  if (!t) return "";
+  const s = Math.max(0, Date.now() / 1000 - t);
+  if (s < 60) return "just now";
+  if (s < 3600) return Math.floor(s / 60) + "m";
+  if (s < 86400) return Math.floor(s / 3600) + "h";
+  return Math.floor(s / 86400) + "d";
+}
+function clock(t) {
+  const d = new Date(t * 1000), today = new Date().toDateString() === d.toDateString();
+  return (today ? "" : d.toLocaleDateString([], {month: "short", day: "numeric"}) + " ") +
+         d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+}
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+function appUrl(s, port) {
+  const d = state.hub.domain;
+  const suffix = port && port !== s.primary_port ? port : null;
+  // Subdomains work for every framework; use them whenever we're browsing through the domain.
+  if (d && (location.hostname === d || location.hostname.endsWith("." + d))) {
+    const p = location.port ? ":" + location.port : "";
+    return `${location.protocol}//${s.name}${suffix ? "--" + suffix : ""}.${d}${p}/`;
+  }
+  return `/${encodeURIComponent(s.name)}${suffix ? "@" + suffix : ""}/`;
+}
+
+async function api(path, opts = {}) {
+  const r = await fetch("/_hub/api/" + path, {
+    method: opts.method || "GET",
+    headers: {"X-Devhub": "1", "Content-Type": "application/json"},
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+
+async function act(s, action, btn) {
+  if (action === "forget" && !confirm(`Forget ${s.name}? It won't be re-added by discovery.`)) return;
+  if (action === "hide" || action === "unhide") {
+    await api(`servers/${s.id}`, {method: "POST", body: {hidden: action === "hide"}}).catch((e) => toast(e.message));
+    toast(action === "hide" ? `${s.name} hidden` : `${s.name} is back`);
+    return load();
+  }
+  btn && (btn.disabled = true);
+  try {
+    await api(`servers/${s.id}/${action}`, {method: "POST"});
+    toast({start: `Starting ${s.name}…`, stop: "Stopped", restart: "Restarting…", forget: "Forgotten"}[action]);
+    setTimeout(load, action === "start" || action === "restart" ? 1500 : 300);
+  } catch (e) { toast(e.message); }
+  finally { btn && (btn.disabled = false); }
+}
+
+const lastUsed = (s) => s.running ? Infinity : (s.last_seen || 0);
+function sortList(list) {
+  const az = (a, b) => a.name.localeCompare(b.name);
+  return [...list].sort(sortMode === "az" ? az : (a, b) => (lastUsed(b) - lastUsed(a)) || az(a, b));
+}
+
+function card(s) {
+  const ports = (s.ports || []).map((p) =>
+    `<a class="port ${p === s.primary_port ? "primary" : ""}" href="${appUrl(s, p)}" target="_blank" rel="noopener">:${p}</a>`).join("");
+  const when = s.running ? `up ${ago(s.last_started)}` : s.last_seen ? `used ${ago(s.last_seen)} ago` : "never run here";
+  const main = s.running
+    ? `<a class="btn primary-btn" href="${appUrl(s)}" target="_blank" rel="noopener">Open</a>
+       <button data-act="restart" ${s.command ? "" : "disabled"}>Restart</button>
+       <button data-act="stop" class="danger">Stop</button>`
+    : `<button data-act="start" class="primary-btn" ${s.command ? "" : "disabled"}>Start</button>`;
+  return `<div class="card ${s.running ? "on" : "idle"}" data-id="${s.id}">
+    <div class="title"><span class="dot"></span>
+      <span class="name">${s.running ? `<a href="${appUrl(s)}" target="_blank" rel="noopener">${esc(s.name)}</a>` : esc(s.name)}</span>
+      ${s.framework ? `<span class="fw">${esc(s.framework)}</span>` : ""}</div>
+    <div class="meta">${esc(s.rel)} · ${when}${s.managed ? " · started here" : ""}</div>
+    ${s.running && ports ? `<div class="ports">${ports}</div>` : ""}
+    <div class="cmd" title="${esc(s.command)}">${esc(s.command || "no command recorded")}</div>
+    <div class="actions">${main}
+      <details class="menu"><summary aria-label="More">⋯</summary><div class="pop">
+        <button data-act="edit">Edit command / name</button>
+        ${s.has_log ? `<button data-act="logs">Logs</button>` : ""}
+        <button data-act="${s.hidden ? "unhide" : "hide"}">${s.hidden ? "Unhide" : "Hide"}</button>
+        ${s.running ? "" : `<button data-act="forget" class="danger">Forget</button>`}
+      </div></details>
+    </div>
+  </div>`;
+}
+
+function chip(s) {
+  return `<div class="chip" data-id="${s.id}"><span class="dot on"></span>
+    <span class="txt"><a class="n" href="${appUrl(s)}" target="_blank" rel="noopener">${esc(s.name)}</a>
+      <span class="s">:${s.primary_port} · ${ago(s.last_started)}</span></span>
+    <a class="btn primary-btn" href="${appUrl(s)}" target="_blank" rel="noopener">Open</a>
+    <button data-act="stop" class="danger" title="Stop">Stop</button></div>`;
+}
+
+function section(key, title, list, q) {
+  const isOpen = q ? true : openSecs[key] ?? true;
+  const live = list.filter((s) => s.running).length;
+  return `<details class="sec" data-key="${esc(key)}" ${isOpen ? "open" : ""}>
+    <summary>${esc(title)} <span class="meta">${list.length}${live ? ` · ${live} running` : ""}</span></summary>
+    <div class="grid">${sortList(list).map(card).join("")}</div></details>`;
+}
+
+function render() {
+  if (!state || document.querySelector("details.menu[open]")) return;  // don't yank an open menu
+  const q = $("#q").value.trim().toLowerCase();
+  const match = (s) => !q || [s.name, s.rel, s.command, s.framework, s.group].join(" ").toLowerCase().includes(q);
+  const all = state.servers.filter(match);
+  const visible = all.filter((s) => !s.hidden), hidden = all.filter((s) => s.hidden);
+
+  const live = sortList(all.filter((s) => s.running));
+  $("#nrun").textContent = live.length || "";
+  $("#running").innerHTML = live.map(chip).join("") ||
+    `<div class="empty">Nothing running. Start something below, or run a dev server in a terminal and it appears here.</div>`;
+
+  // Root folder (Documents / Developer) → parent folder sections when they hold 2+ projects.
+  const order = state.hub.roots.map((r) => r.split("/").pop());
+  const rank = (r) => order.includes(r) ? order.indexOf(r) : order.length;
+  const roots = [...new Set(state.servers.map((s) => s.root))].sort((a, b) => rank(a) - rank(b));
+  let html = "";
+  for (const root of roots) {
+    const items = visible.filter((s) => s.root === root);
+    if (!items.length) continue;
+    const groups = {};
+    for (const s of items) (groups[s.group || ""] ||= []).push(s);
+    const loose = [];
+    const named = [];
+    for (const [g, list] of Object.entries(groups)) {
+      if (g && list.length > 1) named.push([g, list]); else loose.push(...list);
+    }
+    const score = (list) => sortMode === "az" ? 0 : Math.max(...list.map(lastUsed));
+    named.sort((a, b) => (score(b[1]) - score(a[1])) || a[0].localeCompare(b[0]));
+    html += `<h2>${esc(root)} <span class="count">${items.length}</span></h2>`;
+    if (loose.length) html += `<div class="grid">${sortList(loose).map(card).join("")}</div>`;
+    for (const [g, list] of named) html += section(`${root}/${g}`, g, list, q);
+  }
+  $("#library").innerHTML = html || (q ? `<div class="empty" style="margin-top:20px">No projects match “${esc(q)}”.</div>` : "");
+
+  $("#hidden-sec").hidden = !hidden.length;
+  $("#nhidden").textContent = hidden.length;
+  $("#hidden").innerHTML = sortList(hidden).map(card).join("");
+
+  $("#events").innerHTML = state.events.slice(0, 30).map((e) =>
+    `<div class="ev"><time>${clock(e.t)}</time><span><b>${esc(e.name)}</b> <span class="kind-${e.kind}">${esc(e.kind)}</span> ${esc(e.detail)}</span></div>`
+  ).join("") || `<div class="ev">No activity yet.</div>`;
+
+  const hub = state.hub, ts = hub.tailscale;
+  $("#ts").textContent = ts.state === "Running" ? `Tailscale · ${ts.login || ts.dns}` : `Tailscale ${ts.state.toLowerCase()}`;
+  $("#ts").className = "pill" + (ts.state === "Running" ? " ok" : " warn");
+  const sec = $("#sec");
+  const dnsBad = hub.domain && ts.ips.length && !hub.domain_ips.some((ip) => ts.ips.includes(ip));
+  sec.hidden = !(dnsBad || location.protocol === "https:");
+  if (dnsBad) { sec.textContent = `${hub.domain} doesn't point at ${ts.ips[0]}`; sec.className = "pill warn"; }
+  else if (location.protocol === "https:") { sec.textContent = "HTTPS"; sec.className = "pill ok"; }
+  $("#foot").textContent = `Watching ${hub.roots.join(", ")}` + (hub.domain ? ` · apps at <name>.${hub.domain}` : "");
+
+  document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.sort === sortMode));
+  for (const d of document.querySelectorAll("details.sec[data-key^='__']")) {
+    if (!d._init) { d.open = openSecs[d.dataset.key] ?? false; d._init = true; }
+  }
+}
+
+async function load() {
+  try { state = await api("state"); render(); }
+  catch (e) { $("#ts").textContent = "hub unreachable"; $("#ts").className = "pill warn"; }
+}
+
+document.addEventListener("click", (ev) => {
+  const sortBtn = ev.target.closest("[data-sort]");
+  if (sortBtn) { sortMode = sortBtn.dataset.sort; store.set("sort", sortMode); return render(); }
+  // close any open ⋯ menu when clicking elsewhere
+  for (const m of document.querySelectorAll("details.menu[open]")) if (!m.contains(ev.target)) m.open = false;
+  const b = ev.target.closest("[data-act]");
+  if (b) {
+    const id = b.closest("[data-id]").dataset.id, s = state.servers.find((x) => x.id === id), a = b.dataset.act;
+    b.closest("details.menu")?.removeAttribute("open");
+    if (a === "edit") return openEdit(s);
+    if (a === "logs") return openLogs(s);
+    return act(s, a, b);
+  }
+  if (ev.target.matches("[data-close]")) ev.target.closest("dialog").close();
+});
+document.addEventListener("toggle", (ev) => {
+  const d = ev.target;
+  if (d.matches?.("details.sec") && d.dataset.key && !$("#q").value) {
+    openSecs[d.dataset.key] = d.open; store.set("open", openSecs);
+  }
+}, true);
+
+$("#rescan").onclick = async (ev) => {
+  ev.target.disabled = true;
+  try {
+    const r = await api("discover", {method: "POST"});
+    toast(r.added.length ? `Found ${r.added.length} new: ${r.added.join(", ")}` : "No new projects found");
+    load();
+  } catch (e) { toast(e.message); }
+  ev.target.disabled = false;
+};
+
+function openEdit(s) {
+  editing = s;
+  $("#edit-name").textContent = s.name;
+  $("#f-name").value = s.name;
+  $("#f-cmd").value = s.command || "";
+  $("#f-cwd").textContent = s.display_cwd;
+  $("#f-hint").textContent = s.discovered
+    ? "Guessed from the project files. Once you run it from a terminal, devhub records the exact command and environment."
+    : "Recorded from the last time you ran it, along with PATH / virtualenv.";
+  $("#edit").showModal();
+}
+$("#f-save").onclick = async () => {
+  try {
+    await api(`servers/${editing.id}`, {method: "POST", body: {name: $("#f-name").value, command: $("#f-cmd").value}});
+    $("#edit").close(); toast("Saved"); load();
+  } catch (e) { toast(e.message); }
+};
+
+async function openLogs(s) {
+  $("#log-name").textContent = s.name;
+  const pre = $("#log-text");
+  const pull = async () => {
+    const stick = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 30;
+    try { pre.textContent = (await api(`servers/${s.id}/log`)).log || "(empty)"; } catch (e) { pre.textContent = e.message; }
+    if (stick) pre.scrollTop = pre.scrollHeight;
+  };
+  pre.textContent = "";
+  $("#logs").showModal();
+  await pull(); pre.scrollTop = pre.scrollHeight;
+  logTimer = setInterval(pull, 2000);
+}
+$("#logs").addEventListener("close", () => clearInterval(logTimer));
+
+$("#q").addEventListener("input", render);
+load();
+setInterval(() => { if (!document.hidden) load(); }, 3000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+</script>
+</body>
+</html>

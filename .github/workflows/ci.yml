@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile
+        run: python -m py_compile devhub.py
+      - name: Discovery finds a sample project
+        run: |
+          mkdir -p "$RUNNER_TEMP/roots/demo-app"
+          echo '{"dependencies":{"vite":"5"},"scripts":{"dev":"vite"}}' > "$RUNNER_TEMP/roots/demo-app/package.json"
+          export DEVHUB_HOME="$RUNNER_TEMP/hub"
+          mkdir -p "$DEVHUB_HOME"
+          echo "{\"roots\": [\"$RUNNER_TEMP/roots\"], \"port\": 8899}" > "$DEVHUB_HOME/config.json"
+          python devhub.py discover | tee out.txt
+          grep -q "demo-app" out.txt
+      - name: Hub serves the dashboard and API
+        run: |
+          export DEVHUB_HOME="$RUNNER_TEMP/hub"
+          python devhub.py serve > hub.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://localhost:8899/_hub/api/state > state.json && break; sleep 1; done
+          cat hub.log
+          python -c "import json; d=json.load(open('state.json')); assert any(s['name']=='demo-app' for s in d['servers']), d"
+          curl -fsS http://localhost:8899/ | grep -q "<title>devhub</title>"
