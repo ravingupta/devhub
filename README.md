@@ -18,6 +18,15 @@ anywhere through Tailscale.
 - **Sees what you run.** Start `npm run dev` or `uvicorn …` in any terminal under your project
   folders. It shows up within seconds with its folder, port and exact command. When you stop it,
   it moves to history.
+- **One card per project.** Everything running in a project folder (a dev server, a preview build, a
+  second API) lands on that project's card. The first command you run there becomes its Start command;
+  other commands are kept as alternatives you can switch to in **Edit**.
+- **Running at a glance.** The top of the page lists what's running right now, with ports, CPU,
+  memory and uptime.
+- **Always on.** Mark a project as always on and devhub starts it whenever it isn't running,
+  including after the Mac restarts. It retries a few times if it fails, then stops and shows an
+  error. A project can have its own **Stop command** (e.g. a game server's `./server.sh stop`
+  that saves the world first).
 - **Finds what you could run.** It scans your folders for Next/Vite/CRA/Expo/Express/FastAPI/Flask/
   Django/Streamlit projects and works out a start command for each.
 - **Start / stop / restart from any device.** It replays the recorded command with the same PATH
@@ -87,6 +96,7 @@ have no such limits.
 | `allowed_users` | `[]` | Tailscale logins allowed in (empty = this Mac's account) |
 | `poll_seconds` | `3` | how often listening ports are checked |
 | `discover_minutes` | `15` | how often folders are scanned for projects (0 = off) |
+| `start_grace_seconds` | `300` | how long an always-on project gets to come up before devhub tries again |
 | `ignore_ports`, `ignore_paths`, `ignore_commands` | | things to never list |
 
 ## CLI
@@ -94,6 +104,8 @@ have no such limits.
 ```sh
 python3 devhub.py list       # known servers
 python3 devhub.py discover   # dry run of project discovery
+# add a project discovery can't find, e.g. a game server outside your project folders:
+python3 devhub.py add ~/Minecraft "./mcserver.sh start" --stop "./mcserver.sh stop" --always-on
 tail -f ~/.devhub/hub.log    # started / stopped / discovered events
 ```
 

@@ -9,7 +9,7 @@
   :root {
     --bg: #f6f6f4; --surface: #ffffff; --surface-2: #f0f0ed; --border: #e3e3df;
     --text: #1d1d1b; --muted: #6d6d68; --accent: #2563eb; --accent-text: #ffffff;
-    --live: #16a34a; --live-soft: #dcfce7; --stop: #b5b0aa; --danger: #dc2626;
+    --live: #16a34a; --live-soft: #dcfce7; --stop: #b5b0aa; --danger: #dc2626; --danger-soft: #fee2e2;
     --warn: #b45309; --warn-soft: #fef3c7;
     --mono: ui-monospace, "SF Mono", Menlo, monospace;
     color-scheme: light;
@@ -18,7 +18,8 @@
     :root:not([data-theme="light"]) {
       --bg: #141413; --surface: #1d1d1b; --surface-2: #262624; --border: #33332f;
       --text: #ececea; --muted: #9a9a94; --accent: #3b82f6; --live: #22c55e; --live-soft: #14301f;
-      --stop: #5c5c57; --danger: #f87171; --warn: #fbbf24; --warn-soft: #3a2e12; color-scheme: dark;
+      --stop: #5c5c57; --danger: #f87171; --danger-soft: #3a1d1d; --warn: #fbbf24; --warn-soft: #3a2e12;
+      color-scheme: dark;
     }
   }
   * { box-sizing: border-box; }
@@ -31,6 +32,7 @@
           color: var(--muted); border: 1px solid var(--border); white-space: nowrap; }
   .pill.ok { color: var(--live); background: var(--live-soft); border-color: transparent; }
   .pill.warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
+  .pill.bad { color: var(--danger); background: var(--danger-soft); border-color: transparent; }
   .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 14px 0 4px; }
   input[type=search] { flex: 1; min-width: 160px; max-width: 340px; padding: 8px 12px; border-radius: 10px;
          border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; }
@@ -43,14 +45,33 @@
        margin: 28px 0 10px; font-weight: 600; display: flex; gap: 8px; align-items: baseline; }
   h2 .count { font-weight: 500; letter-spacing: 0; text-transform: none; }
 
-  /* running bar */
-  .live { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); }
-  .chip { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border);
-          border-radius: 12px; padding: 8px 8px 8px 12px; min-width: 0; }
-  .chip .txt { min-width: 0; flex: 1; }
-  .chip .n { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
-             color: inherit; text-decoration: none; }
-  .chip .s { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  /* Running now: a compact list, deliberately unlike the cards below */
+  .runlist { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .run { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) 92px 70px auto; gap: 14px;
+         align-items: center; padding: 10px 12px 10px 14px; border-top: 1px solid var(--border); }
+  .run:first-child { border-top: 0; }
+  .run .who { min-width: 0; display: flex; gap: 10px; align-items: center; }
+  .run .who > div { min-width: 0; }
+  .run .n { font-weight: 600; color: inherit; text-decoration: none; white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis; display: block; }
+  .run a.n:hover { text-decoration: underline; }
+  .run .sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .run .addr { font: 12.5px var(--mono); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .run .addr small { color: var(--muted); font: inherit; }
+  .run .num { font: 12px var(--mono); color: var(--muted); text-align: right; white-space: nowrap; }
+  .run .num b { color: var(--text); font-weight: 500; }
+  .run .go { display: flex; gap: 6px; justify-content: flex-end; }
+  .run.warn { background: var(--warn-soft); }
+  .run.bad { background: var(--danger-soft); }
+  .run .state { font-size: 12px; font-weight: 600; }
+  .run.warn .state { color: var(--warn); } .run.bad .state { color: var(--danger); }
+  @media (max-width: 720px) {
+    .run { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; }
+    .run .addr { grid-column: 1; grid-row: 2; }
+    .run .num.cpu { grid-column: 2; grid-row: 2; }
+    .run .num.up { display: none; }
+    .run .go { grid-column: 2; grid-row: 1; }
+  }
 
   /* sections */
   details.sec { margin-top: 10px; }
@@ -69,13 +90,19 @@
   .title { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--stop); flex: none; }
   .on .dot, .dot.on { background: var(--live); box-shadow: 0 0 0 3px var(--live-soft); }
+  .dot.warn { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
+  .dot.bad { background: var(--danger); box-shadow: 0 0 0 3px var(--danger-soft); }
   .name { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
   .name a { color: inherit; text-decoration: none; }
   .name a:hover { text-decoration: underline; }
   .fw { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; flex: none; }
+  .fw.always { color: var(--live); border-color: var(--live); }
   .meta { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
   .cmd { font: 12px/1.4 var(--mono); background: var(--surface-2); border-radius: 8px; padding: 5px 8px;
          overflow-x: auto; white-space: nowrap; color: var(--muted); }
+  .procs { display: flex; flex-direction: column; gap: 4px; }
+  .procs .cmd { display: flex; gap: 10px; justify-content: space-between; }
+  .procs .cmd span:last-child { color: var(--text); flex: none; }
   .ports { display: flex; gap: 6px; flex-wrap: wrap; }
   .port { font: 12px var(--mono); padding: 1px 7px; border-radius: 6px; border: 1px solid var(--border);
           color: var(--muted); text-decoration: none; }
@@ -90,6 +117,7 @@
   .primary-btn:hover { background: var(--accent); filter: brightness(1.08); }
   .danger { color: var(--danger); }
   button:disabled { opacity: .5; cursor: default; }
+  .run .go button, .run .go .btn { padding: 6px 10px; }
 
   details.menu { position: relative; margin-left: auto; }
   details.menu > summary { list-style: none; cursor: pointer; padding: 5px 9px; border-radius: 8px; color: var(--muted);
@@ -97,7 +125,7 @@
   details.menu > summary::-webkit-details-marker { display: none; }
   details.menu > summary:hover { background: var(--surface-2); }
   .pop { position: absolute; right: 0; bottom: calc(100% + 4px); z-index: 5; background: var(--surface);
-         border: 1px solid var(--border); border-radius: 12px; padding: 4px; min-width: 150px;
+         border: 1px solid var(--border); border-radius: 12px; padding: 4px; min-width: 170px;
          box-shadow: 0 8px 24px rgb(0 0 0 / .14); display: flex; flex-direction: column; }
   .pop button { border: 0; justify-content: flex-start; width: 100%; padding: 9px 10px; }
 
@@ -109,17 +137,26 @@
   .ev > span { min-width: 0; overflow-wrap: anywhere; }
   .ev b { font-weight: 600; }
   .kind-started { color: var(--live); } .kind-stopped { color: var(--muted); }
+  .kind-gave-up, .kind-auto-start-failed { color: var(--danger); }
 
   dialog { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text);
            padding: 18px; width: min(720px, calc(100vw - 32px)); }
   dialog::backdrop { background: rgb(0 0 0 / .35); }
   dialog h3 { margin: 0 0 12px; font-size: 17px; }
-  dialog label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
-  dialog input, dialog textarea { width: 100%; font: 13px var(--mono); padding: 9px; border-radius: 9px;
+  dialog label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+  dialog input[type=text], dialog textarea { width: 100%; font: 13px var(--mono); padding: 9px; border-radius: 9px;
            border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+  dialog label.check { display: flex; gap: 10px; align-items: flex-start; color: var(--text); font-size: 14px; margin-top: 14px; }
+  dialog label.check input { margin-top: 3px; }
+  dialog label.check small { display: block; color: var(--muted); font-size: 12px; }
+  .alts { display: flex; flex-direction: column; gap: 6px; }
+  .alt { display: flex; gap: 6px; align-items: center; }
+  .alt code { flex: 1; min-width: 0; font: 12px var(--mono); background: var(--bg); border: 1px solid var(--border);
+              border-radius: 8px; padding: 6px 8px; overflow-x: auto; white-space: nowrap; }
+  .alt button { padding: 6px 9px; }
   dialog pre { font: 12px/1.45 var(--mono); background: var(--bg); border-radius: 10px; padding: 10px;
            max-height: 60vh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
-  .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
   .hint { font-size: 12px; color: var(--muted); margin-top: 6px; overflow-wrap: anywhere; }
   #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text);
            color: var(--bg); padding: 9px 14px; border-radius: 10px; font-size: 13px; opacity: 0;
@@ -145,7 +182,7 @@
   </div>
 
   <h2>Running now <span class="count" id="nrun"></span></h2>
-  <div class="live" id="running"></div>
+  <div id="running"></div>
 
   <div id="library"></div>
 
@@ -164,10 +201,18 @@
 <dialog id="edit">
   <h3>Edit <span id="edit-name"></span></h3>
   <label for="f-name">URL name</label>
-  <input id="f-name" autocomplete="off" spellcheck="false">
-  <label for="f-cmd">Start command (runs in <span id="f-cwd"></span>)</label>
-  <textarea id="f-cmd" rows="3" spellcheck="false"></textarea>
+  <input type="text" id="f-name" autocomplete="off" spellcheck="false">
+  <label for="f-cmd">Start command <span class="hint">(runs in <span id="f-cwd"></span>)</span></label>
+  <textarea id="f-cmd" rows="2" spellcheck="false"></textarea>
   <p class="hint" id="f-hint"></p>
+  <div id="f-alts-wrap">
+    <label>Other commands seen in this project</label>
+    <div class="alts" id="f-alts"></div>
+  </div>
+  <label for="f-stop">Stop command <span class="hint">(optional, e.g. one that saves state first; otherwise devhub stops the processes)</span></label>
+  <input type="text" id="f-stop" autocomplete="off" spellcheck="false" placeholder="./server.sh stop">
+  <label class="check"><input type="checkbox" id="f-always">
+    <span>Always on<small>Start it whenever it isn't running, including after the Mac restarts. Stopping it here pauses it until you press Start.</small></span></label>
   <div class="row"><button data-close>Cancel</button><button class="primary-btn" id="f-save">Save</button></div>
 </dialog>
 
@@ -196,8 +241,8 @@ function ago(t) {
   const s = Math.max(0, Date.now() / 1000 - t);
   if (s < 60) return "just now";
   if (s < 3600) return Math.floor(s / 60) + "m";
-  if (s < 86400) return Math.floor(s / 3600) + "h";
-  return Math.floor(s / 86400) + "d";
+  if (s < 86400) return Math.floor(s / 3600) + "h " + Math.floor((s % 3600) / 60) + "m";
+  return Math.floor(s / 86400) + "d " + Math.floor((s % 86400) / 3600) + "h";
 }
 function clock(t) {
   const d = new Date(t * 1000), today = new Date().toDateString() === d.toDateString();
@@ -208,6 +253,7 @@ function toast(msg) {
   const t = $("#toast"); t.textContent = msg; t.classList.add("show");
   clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600);
 }
+const mb = (m) => m >= 1024 ? (m / 1024).toFixed(1) + " GB" : Math.round(m) + " MB";
 
 function appUrl(s, port) {
   const d = state.hub.domain;
@@ -218,6 +264,11 @@ function appUrl(s, port) {
     return `${location.protocol}//${s.name}${suffix ? "--" + suffix : ""}.${d}${p}/`;
   }
   return `/${encodeURIComponent(s.name)}${suffix ? "@" + suffix : ""}/`;
+}
+// For servers that aren't web pages (a game server, a database): the address to connect to over Tailscale.
+function tcpAddr(s) {
+  const ts = state.hub.tailscale;
+  return `${ts.dns || ts.ips[0] || location.hostname}:${s.primary_port}`;
 }
 
 async function api(path, opts = {}) {
@@ -233,9 +284,19 @@ async function api(path, opts = {}) {
 
 async function act(s, action, btn) {
   if (action === "forget" && !confirm(`Forget ${s.name}? It won't be re-added by discovery.`)) return;
-  if (action === "hide" || action === "unhide") {
-    await api(`servers/${s.id}`, {method: "POST", body: {hidden: action === "hide"}}).catch((e) => toast(e.message));
-    toast(action === "hide" ? `${s.name} hidden` : `${s.name} is back`);
+  if (action === "stop" && s.always_on && !confirm(`${s.name} is always on. Stop it and pause until you press Start?`)) return;
+  if (action === "copy") {
+    try { await navigator.clipboard.writeText(tcpAddr(s)); toast(`Copied ${tcpAddr(s)}`); }
+    catch { prompt("Address", tcpAddr(s)); }
+    return;
+  }
+  const edits = {hide: {hidden: true}, unhide: {hidden: false}, "always-on": {always_on: !s.always_on}};
+  if (edits[action]) {
+    try {
+      await api(`servers/${s.id}`, {method: "POST", body: edits[action]});
+      toast({hide: `${s.name} hidden`, unhide: `${s.name} is back`}[action] ||
+            (s.always_on ? `${s.name}: always on turned off` : `${s.name} is always on`));
+    } catch (e) { toast(e.message); }
     return load();
   }
   btn && (btn.disabled = true);
@@ -253,25 +314,49 @@ function sortList(list) {
   return [...list].sort(sortMode === "az" ? az : (a, b) => (lastUsed(b) - lastUsed(a)) || az(a, b));
 }
 
+// Always-on status, shared by the running list and the cards.
+function health(s) {
+  if (s.running) return null;
+  if (s.gave_up) return {cls: "bad", text: "failed to start"};
+  if (s.paused) return {cls: "warn", text: "paused"};
+  if (s.starting) return {cls: "warn", text: "starting…"};
+  if (s.always_on) return {cls: "bad", text: "not running"};
+  return null;
+}
+
+function openBtn(s, small) {
+  if (!s.running) return "";
+  return s.web
+    ? `<a class="btn ${small ? "" : "primary-btn"}" href="${appUrl(s)}" target="_blank" rel="noopener">Open</a>`
+    : `<button data-act="copy" class="${small ? "" : "primary-btn"}" title="${esc(tcpAddr(s))}">Copy address</button>`;
+}
+
 function card(s) {
-  const ports = (s.ports || []).map((p) =>
-    `<a class="port ${p === s.primary_port ? "primary" : ""}" href="${appUrl(s, p)}" target="_blank" rel="noopener">:${p}</a>`).join("");
-  const when = s.running ? `up ${ago(s.last_started)}` : s.last_seen ? `used ${ago(s.last_seen)} ago` : "never run here";
+  const h = health(s);
+  const ports = (s.ports || []).map((p) => s.web
+    ? `<a class="port ${p === s.primary_port ? "primary" : ""}" href="${appUrl(s, p)}" target="_blank" rel="noopener">:${p}</a>`
+    : `<span class="port ${p === s.primary_port ? "primary" : ""}">:${p}</span>`).join("");
+  const when = s.running ? `up ${ago(s.last_started)}` : h ? h.text : s.last_seen ? `used ${ago(s.last_seen)} ago` : "never run here";
   const main = s.running
-    ? `<a class="btn primary-btn" href="${appUrl(s)}" target="_blank" rel="noopener">Open</a>
+    ? `${openBtn(s)}
        <button data-act="restart" ${s.command ? "" : "disabled"}>Restart</button>
        <button data-act="stop" class="danger">Stop</button>`
-    : `<button data-act="start" class="primary-btn" ${s.command ? "" : "disabled"}>Start</button>`;
+    : `<button data-act="start" class="primary-btn" ${s.command ? "" : "disabled"}>${s.paused || s.gave_up ? "Resume" : "Start"}</button>`;
+  const procs = s.running && s.procs.length > 1
+    ? `<div class="procs">${s.procs.map((p) => `<div class="cmd" title="${esc(p.command)}"><span>${esc(p.command)}</span><span>${p.ports.map((x) => ":" + x).join(" ")}</span></div>`).join("")}</div>`
+    : `<div class="cmd" title="${esc(s.command)}">${esc(s.command || "no command recorded")}</div>`;
   return `<div class="card ${s.running ? "on" : "idle"}" data-id="${s.id}">
-    <div class="title"><span class="dot"></span>
-      <span class="name">${s.running ? `<a href="${appUrl(s)}" target="_blank" rel="noopener">${esc(s.name)}</a>` : esc(s.name)}</span>
-      ${s.framework ? `<span class="fw">${esc(s.framework)}</span>` : ""}</div>
-    <div class="meta">${esc(s.rel)} · ${when}${s.managed ? " · started here" : ""}</div>
+    <div class="title"><span class="dot ${h ? h.cls : ""}"></span>
+      <span class="name">${s.running && s.web ? `<a href="${appUrl(s)}" target="_blank" rel="noopener">${esc(s.name)}</a>` : esc(s.name)}</span>
+      ${s.always_on ? `<span class="fw always">always on</span>` : ""}
+      ${s.framework || s.service ? `<span class="fw">${esc(s.service || s.framework)}</span>` : ""}</div>
+    <div class="meta">${esc(s.rel)} · ${when}${s.managed ? " · started here" : ""}${s.running && s.procs.length > 1 ? ` · ${s.procs.length} processes` : ""}</div>
     ${s.running && ports ? `<div class="ports">${ports}</div>` : ""}
-    <div class="cmd" title="${esc(s.command)}">${esc(s.command || "no command recorded")}</div>
+    ${procs}
     <div class="actions">${main}
       <details class="menu"><summary aria-label="More">⋯</summary><div class="pop">
-        <button data-act="edit">Edit command / name</button>
+        <button data-act="edit">Edit…</button>
+        <button data-act="always-on">${s.always_on ? "Turn off always on" : "Keep always on"}</button>
         ${s.has_log ? `<button data-act="logs">Logs</button>` : ""}
         <button data-act="${s.hidden ? "unhide" : "hide"}">${s.hidden ? "Unhide" : "Hide"}</button>
         ${s.running ? "" : `<button data-act="forget" class="danger">Forget</button>`}
@@ -280,12 +365,26 @@ function card(s) {
   </div>`;
 }
 
-function chip(s) {
-  return `<div class="chip" data-id="${s.id}"><span class="dot on"></span>
-    <span class="txt"><a class="n" href="${appUrl(s)}" target="_blank" rel="noopener">${esc(s.name)}</a>
-      <span class="s">:${s.primary_port} · ${ago(s.last_started)}</span></span>
-    <a class="btn primary-btn" href="${appUrl(s)}" target="_blank" rel="noopener">Open</a>
-    <button data-act="stop" class="danger" title="Stop">Stop</button></div>`;
+// One row in "Running now": name + folder, address, CPU/memory, uptime, actions.
+function runRow(s) {
+  const h = health(s);
+  const cpu = s.procs.reduce((a, p) => a + (p.cpu || 0), 0), mem = s.procs.reduce((a, p) => a + (p.mem || 0), 0);
+  const addr = s.running
+    ? (s.web ? `${esc(s.ports.map((p) => ":" + p).join(" "))}` : `${esc(tcpAddr(s))}`) +
+      (s.procs.length > 1 ? ` <small>· ${s.procs.length} processes</small>` : "")
+    : `<span class="state">${esc(h.text)}</span>`;
+  return `<div class="run ${h ? h.cls : ""}" data-id="${s.id}">
+    <div class="who"><span class="dot ${s.running ? "on" : h.cls}"></span><div>
+      ${s.running && s.web ? `<a class="n" href="${appUrl(s)}" target="_blank" rel="noopener">${esc(s.name)}</a>` : `<span class="n">${esc(s.name)}</span>`}
+      <div class="sub">${esc(s.rel)}${s.service ? " · " + esc(s.service) : s.framework ? " · " + esc(s.framework) : ""}${s.always_on ? " · always on" : ""}</div>
+    </div></div>
+    <div class="addr" title="${esc((s.running && !s.web ? tcpAddr(s) + "\n" : "") + (s.procs.map((p) => p.command).join("\n") || s.command))}">${addr}</div>
+    <div class="num cpu">${s.running ? `<b>${cpu.toFixed(cpu < 10 ? 1 : 0)}%</b> · ${mb(mem)}` : ""}</div>
+    <div class="num up">${s.running ? ago(s.last_started) : ""}</div>
+    <div class="go">${s.running
+      ? `${openBtn(s, true)}<button data-act="stop" class="danger">Stop</button>`
+      : `<button data-act="start" class="primary-btn">${s.paused || s.gave_up ? "Resume" : "Start"}</button>`}</div>
+  </div>`;
 }
 
 function section(key, title, list, q) {
@@ -297,16 +396,21 @@ function section(key, title, list, q) {
 }
 
 function render() {
-  if (!state || document.querySelector("details.menu[open]")) return;  // don't yank an open menu
+  if (!state || document.querySelector("details.menu[open]") || document.querySelector("dialog[open]")) return;
   const q = $("#q").value.trim().toLowerCase();
-  const match = (s) => !q || [s.name, s.rel, s.command, s.framework, s.group].join(" ").toLowerCase().includes(q);
+  const match = (s) => !q || [s.name, s.rel, s.command, s.framework, s.group, s.service].join(" ").toLowerCase().includes(q);
   const all = state.servers.filter(match);
   const visible = all.filter((s) => !s.hidden), hidden = all.filter((s) => s.hidden);
 
-  const live = sortList(all.filter((s) => s.running));
-  $("#nrun").textContent = live.length || "";
-  $("#running").innerHTML = live.map(chip).join("") ||
-    `<div class="empty">Nothing running. Start something below, or run a dev server in a terminal and it appears here.</div>`;
+  // Running now, plus always-on projects that should be running but aren't (so problems stand out).
+  const live = all.filter((s) => s.running || (s.always_on && health(s)));
+  const nLive = live.filter((s) => s.running).length;
+  live.sort((a, b) => (!!health(b) - !!health(a)) || a.name.localeCompare(b.name));
+  $("#nrun").textContent = nLive || "";
+  document.title = nLive ? `(${nLive}) devhub` : "devhub";
+  $("#running").innerHTML = live.length
+    ? `<div class="runlist">${live.map(runRow).join("")}</div>`
+    : `<div class="empty">Nothing running. Start something below, or run a dev server in a terminal and it appears here.</div>`;
 
   // Root folder (Documents / Developer) → parent folder sections when they hold 2+ projects.
   const order = state.hub.roots.map((r) => r.split("/").pop());
@@ -335,8 +439,8 @@ function render() {
   $("#nhidden").textContent = hidden.length;
   $("#hidden").innerHTML = sortList(hidden).map(card).join("");
 
-  $("#events").innerHTML = state.events.slice(0, 30).map((e) =>
-    `<div class="ev"><time>${clock(e.t)}</time><span><b>${esc(e.name)}</b> <span class="kind-${e.kind}">${esc(e.kind)}</span> ${esc(e.detail)}</span></div>`
+  $("#events").innerHTML = state.events.slice(0, 40).map((e) =>
+    `<div class="ev"><time>${clock(e.t)}</time><span><b>${esc(e.name)}</b> <span class="kind-${esc(e.kind.replace(/\s+/g, "-"))}">${esc(e.kind)}</span> ${esc(e.detail)}</span></div>`
   ).join("") || `<div class="ev">No activity yet.</div>`;
 
   const hub = state.hub, ts = hub.tailscale;
@@ -367,7 +471,9 @@ document.addEventListener("click", (ev) => {
   for (const m of document.querySelectorAll("details.menu[open]")) if (!m.contains(ev.target)) m.open = false;
   const b = ev.target.closest("[data-act]");
   if (b) {
-    const id = b.closest("[data-id]").dataset.id, s = state.servers.find((x) => x.id === id), a = b.dataset.act;
+    const holder = b.closest("[data-id]");
+    if (!holder) return;
+    const s = state.servers.find((x) => x.id === holder.dataset.id), a = b.dataset.act;
     b.closest("details.menu")?.removeAttribute("open");
     if (a === "edit") return openEdit(s);
     if (a === "logs") return openLogs(s);
@@ -392,23 +498,48 @@ $("#rescan").onclick = async (ev) => {
   ev.target.disabled = false;
 };
 
+function renderAlts(s) {
+  $("#f-alts-wrap").hidden = !s.alternatives.length;
+  $("#f-alts").innerHTML = s.alternatives.map((c, i) =>
+    `<div class="alt"><code title="${esc(c)}">${esc(c)}</code>
+      <button data-alt-use="${i}" title="Make this the Start command">Use</button>
+      <button data-alt-del="${i}" class="danger" title="Remove from the list">✕</button></div>`).join("");
+}
+$("#f-alts").addEventListener("click", async (ev) => {
+  const use = ev.target.closest("[data-alt-use]"), del = ev.target.closest("[data-alt-del]");
+  if (use) { $("#f-cmd").value = editing.alternatives[+use.dataset.altUse]; return; }
+  if (del) {
+    const cmd = editing.alternatives[+del.dataset.altDel];
+    try {
+      const r = await api(`servers/${editing.id}`, {method: "POST", body: {remove_alternative: cmd}});
+      editing = r.server; renderAlts(editing);
+    } catch (e) { toast(e.message); }
+  }
+});
+
 function openEdit(s) {
   editing = s;
   $("#edit-name").textContent = s.name;
   $("#f-name").value = s.name;
   $("#f-cmd").value = s.command || "";
+  $("#f-stop").value = s.stop_command || "";
+  $("#f-always").checked = s.always_on;
   $("#f-cwd").textContent = s.display_cwd;
   $("#f-hint").textContent = s.discovered
     ? "Guessed from the project files. Once you run it from a terminal, devhub records the exact command and environment."
-    : "Recorded from the last time you ran it, along with PATH / virtualenv.";
+    : "Recorded from when you ran it, along with PATH / virtualenv. Other commands you run in this folder show up below.";
+  renderAlts(s);
   $("#edit").showModal();
 }
 $("#f-save").onclick = async () => {
+  const body = {name: $("#f-name").value, command: $("#f-cmd").value, stop_command: $("#f-stop").value};
+  if ($("#f-always").checked !== editing.always_on) body.always_on = $("#f-always").checked;
   try {
-    await api(`servers/${editing.id}`, {method: "POST", body: {name: $("#f-name").value, command: $("#f-cmd").value}});
+    await api(`servers/${editing.id}`, {method: "POST", body});
     $("#edit").close(); toast("Saved"); load();
   } catch (e) { toast(e.message); }
 };
+$("#edit").addEventListener("close", () => load());
 
 async function openLogs(s) {
   $("#log-name").textContent = s.name;
@@ -423,7 +554,7 @@ async function openLogs(s) {
   await pull(); pre.scrollTop = pre.scrollHeight;
   logTimer = setInterval(pull, 2000);
 }
-$("#logs").addEventListener("close", () => clearInterval(logTimer));
+$("#logs").addEventListener("close", () => { clearInterval(logTimer); load(); });
 
 $("#q").addEventListener("input", render);
 load();
